@@ -3,30 +3,57 @@
 @section('content')
 
 <div class="container mt-5">
-    <form action="{{ route('users_save', $user->id ?? null) }}" method="POST">
-        @csrf
-        <div class="mb-3">
-            <label class="form-label">Name:</label>
-            <input type="text" class="form-control" name="name" required value="{{ old('name', $user->name ?? '') }}">
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Email:</label>
-            <input type="email" class="form-control" name="email" required value="{{ old('email', $user->email ?? '') }}">
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Role:</label>
-            <select class="form-select" name="role">
-                <option value="admin" {{ old('role', $user->role ?? '') == 'admin' ? 'selected' : '' }}>Admin</option>
-                <option value="user" {{ old('role', $user->role ?? '') == 'user' ? 'selected' : '' }}>User</option>
-            </select>
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Password:</label>
-            <input type="password" class="form-control" name="password" {{ $user->exists ? '' : 'required' }}>
-        </div>
+<form action="{{ route('users_save') }}" method="POST">
+    @csrf
 
-        <button type="submit" class="btn btn-primary">Save</button>
-    </form>
+    <div class="form-group mb-2">
+        <label class="form-label">Name:</label>
+        <input type="text" class="form-control" name="name" required>
+    </div>
+
+    <div class="form-group mb-2">
+        <label class="form-label">Email:</label>
+        <input type="email" class="form-control" name="email" required>
+    </div>
+
+    <div class="form-group mb-2">
+        <label class="form-label">Role:</label>
+        <select name="role" class="form-control" required>
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+        </select>
+    </div>
+
+    <!-- Security Question Dropdown -->
+    <div class="form-group mb-2">
+        <label class="form-label">Security Question:</label>
+        <select name="security_question" class="form-control">
+            <option value="">-- Select a Security Question --</option>
+            <option value="What is your pet's name?">What is your pet's name?</option>
+            <option value="What is your mother's maiden name?">What is your mother's maiden name?</option>
+            <option value="What city were you born in?">What city were you born in?</option>
+        </select>
+    </div>
+
+    <!-- Security Answer Input -->
+    <div class="form-group mb-2">
+        <label class="form-label">Security Answer:</label>
+        <input type="text" class="form-control" name="security_answer">
+    </div>
+
+    <div class="form-group mb-2">
+        <label class="form-label">Password:</label>
+        <input type="password" class="form-control" name="password" required>
+    </div>
+
+    <div class="form-group mb-2">
+        <label class="form-label">Confirm Password:</label>
+        <input type="password" class="form-control" name="password_confirmation" required>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Add User</button>
+</form>
+
 </div>
 
 @endsection

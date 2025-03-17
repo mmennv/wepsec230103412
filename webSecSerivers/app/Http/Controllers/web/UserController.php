@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Web;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
@@ -25,6 +27,7 @@ class UserController extends Controller
 
         $users = $query->get();
         return view("users.list", compact('users'));
+
     }
 
     // Show add/edit form
@@ -44,7 +47,7 @@ class UserController extends Controller
 
     // Set password only if it's a new user
     if (!$user->exists) {
-        $user->password = bcrypt('password123'); // Default password
+        $user->password = bcrypt('password123');
     }
 
     $user->save();
@@ -57,5 +60,31 @@ class UserController extends Controller
     {
         $user->delete();
         return redirect()->route('users_list');
+    }
+
+    public function doLogin(Request $request)
+    {
+        // Validate input
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|min:8',
+        ]);
+
+        // Fetch user from database
+        $user = User::where('email', $request->email)->first();
+
+        // Debugging: Check if user exists
+        if (!$user) {
+            return back()->with('error', 'User not found.');
+        }
+
+        // Debugging: Check if password is correct
+        if (!Hash::check($request->password, $user->password)) {
+            return back()->with('error', 'Incorrect password.');
+        }
+
+        // Authenticate user
+        Auth::login($user);
+        return redirect('/')->with('success', 'Login successful!');
     }
 }

@@ -3,27 +3,51 @@
 
  use Illuminate\Http\Request;
  use App\Models\Product;
- use App\Http\Controllers\Controller;
+ use Illuminate\Routing\Controller; // Make sure this is the correct base controller
  
  class ProductsController extends Controller
  {
-    public function edit(Request $request, Product $product = null) {
-        $product = $product??new Product();
-        return view("products.add", compact('product'));
-    }
+     public function __construct()
+     {
+         $this->middleware('auth')->except('list'); // Fix middleware usage
+     }
+ 
+     public function edit(Request $request, Product $product = null) {
+         $product = $product ?? new Product();
+         return view("products.add", compact('product'));
+     }
+ 
+     public function save(Request $request, Product $product = null)
+    {
+        // ✅ Use $request->validate(), NOT $this->validate()
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'code' => 'required|string|unique:products,code,' . ($product ? $product->id : 'NULL'),
+            'model' => 'required|string',
+            'price' => 'required|numeric|min:0',
+            'photo' => 'nullable|string',
+            'description' => 'nullable|string',
+        ]);
 
-    public function save(Request $request, Product $product = null) {
-        $product = $product??new Product();
-        $product->fill($request->all());
+        // If updating, keep the existing product; otherwise, create a new one
+        $product = $product ?? new Product();
+        $product->name = $request->name;
+        $product->code = $request->code;
+        $product->model = $request->model;
+        $product->price = $request->price;
+        $product->photo = $request->photo;
+        $product->description = $request->description;
+
         $product->save();
-        return redirect()->route('products_list');
-    }
 
-    public function delete(Request $request, Product $product) {
-        $product->delete();
-        return redirect()->route('products_list');
+        return redirect()->route('products_list')->with('success', 'Product saved successfully.');
     }
-    
+ 
+     public function delete(Product $product) {
+         $product->delete();
+         return redirect()->route('products_list');
+     }
+ 
      public function list(Request $request) 
      {
          $query = Product::select("products.*");
@@ -54,5 +78,4 @@
          return view("products.list", compact('products'));
      }
  }
- 
  

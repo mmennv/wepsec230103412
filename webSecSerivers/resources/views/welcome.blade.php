@@ -1,16 +1,18 @@
-@extends('layouts.master')
-@section('title', 'Home')
+@extends('layouts.master') 
+@section('title', 'welcome') 
 @section('content')
-    <h1 style="text-align: center">Welcome to WebSec</h1>
-    <div class="contiainer m-3">
-        <div class="card-body" style="text-align: center">
-            <button type="button" class="btn btn-primary" onclick="doSomething()">Press Me</button>
-        </div>
-
-    </div>
     <script>
-        function doSomething() {
-            alert('Hello From JavaScript');
-        }
+    function doSomething() {
+        alert("welcome to our website");
+    }
     </script>
+    <div class="card m-4">
+    <div class="card-body">
+        welcome to home page
+        <button type="button" class="btn btn-success" onclick="doSomething()">Press here</button>
+    </div>
+    </div>
 @endsection
+
+
+

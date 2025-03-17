@@ -2,6 +2,8 @@
 @section('title', 'Users Management')
 @section('content')
 
+
+
 <div class="row mb-3">
     <div class="col col-10">
         <h1>Users</h1>
