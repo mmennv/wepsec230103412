@@ -7,39 +7,46 @@ use App\Models\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
+use Artisan;
 
 class UsersController extends Controller
 {
     public function register()
     {
-        return view('users.register');
+        $roles = Role::all(); // Fetch roles from database
+        return view('users.register', compact('roles'));
     }
+
 
     public function doRegister(Request $request)
     {
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
+            'role' => 'required|exists:roles,name', // Ensure role exists in DB
             'security_question' => 'nullable|string',
             'security_answer' => 'nullable|string',
             'password' => 'required|confirmed|min:8',
         ]);
 
-        try {
-            $user = new User();
-            $user->name = $request->name;
-            $user->email = $request->email;
-            $user->security_question = $request->security_question ?? null;
-            $user->security_answer = $request->filled('security_answer') ? Hash::make($request->security_answer) : null;
-            $user->password = Hash::make($request->password);
-            $user->role = 'user';
-            $user->save();
+        $user = new User();
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->security_question = $request->security_question ?? null;
+        $user->security_answer = $request->security_answer ? Hash::make($request->security_answer) : null;
+        $user->password = Hash::make($request->password);
 
-            return redirect('/login')->with('success', 'Registration successful! You can now log in.');
-        } catch (\Exception $e) {
-            return back()->with('error', 'Error during saving: ' . $e->getMessage());
-        }
+        $user->save();
+
+        // Assign Role to User (Ensure it is added to model_has_roles)
+        $user->assignRole($request->role);
+
+        return redirect('/login')->with('success', 'Registration successful! You can now log in.');
     }
+
+
 
     public function login()
     {
@@ -75,7 +82,22 @@ class UsersController extends Controller
 
     public function profile()
     {
-        return view('users.profile', ['user' => Auth::user()]);
+        $user = $user ?? auth()->user();
+        if (auth()->id() != $user?->id) {
+            if (!auth()->user()->hasPermissionTo('show_users'))
+                abort(401);
+        }
+
+        $permissions = [];
+        foreach ($user->permissions as $permission) {
+            $permissions[] = $permission;
+        }
+        foreach ($user->roles as $role) {
+            foreach ($role->permissions as $permission) {
+                $permissions[] = $permission;
+            }
+        }
+        return view('users.profile', compact('user', 'permissions'));
     }
 
     public function updatePassword(Request $request)
@@ -134,15 +156,29 @@ class UsersController extends Controller
 
     public function edit(User $user)
     {
-        return view('users.edit', compact('user'));
+        $roles = Role::all();
+        $permissions = Permission::all();
+
+        // Attach current roles & permissions for checkboxes
+        foreach ($roles as $role) {
+            $role->assigned = $user->hasRole($role->name);
+        }
+
+        foreach ($permissions as $permission) {
+            $permission->assigned = $user->hasPermissionTo($permission->name);
+        }
+
+        return view('users.edit', compact('user', 'roles', 'permissions'));
     }
 
-    public function save(Request $request, User $user = null)
+
+    public function save(Request $request, User $user=null)
     {
+        // dd($request->all());
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . ($user ? $user->id : 'NULL'),
-            'role' => 'required|string|in:admin,user',
+            'role' => 'required|string|exists:roles,name', // ✅ Ensure role exists
             'security_question' => 'nullable|string',
             'security_answer' => 'nullable|string',
             'password' => $user ? 'nullable|min:8' : 'required|min:8|confirmed',
@@ -151,27 +187,40 @@ class UsersController extends Controller
         $user = $user ?? new User();
         $user->name = $request->name;
         $user->email = $request->email;
-        $user->role = $request->role;
         $user->security_question = $request->security_question ?? null;
-
+        
         if ($request->filled('security_answer')) {
             $user->security_answer = Hash::make($request->security_answer);
         }
-
+        
         if ($request->filled('password')) {
             $user->password = Hash::make($request->password);
         } elseif (!$user->exists) {
             return back()->with('error', 'Password is required when adding a new user.');
         }
+        
+        $user->save(); // 🛑 احفظ المستخدم أولًا
+        
+        // if (auth()->user()->can('edit_users')) {
+            $user->syncRoles($request->roles);
+            $user->syncPermissions($request->permissions);
 
-        $user->save();
-
-        return redirect()->route('users_list')->with('success', 'User saved successfully.');
-    }
+            Artisan::call('cache:clear');
+        
+            // app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        // }
+        
+        // تحقق إذا تم حفظ الدور أم لا
+        // dd($user->roles);
+        
+        return redirect()->route('users_edit', $user->id)->with('success', 'User saved successfully.');
+    }        
 
     public function delete(User $user)
     {
         $user->delete();
         return redirect()->route('users_list')->with('success', 'User deleted successfully.');
     }
+
+
 }

@@ -21,6 +21,7 @@
         <select name="role" class="form-control" required>
             <option value="user">User</option>
             <option value="admin">Admin</option>
+            <option value="Employee">Employee</option>
         </select>
     </div>
 
@@ -33,6 +34,7 @@
             <option value="What is your mother's maiden name?">What is your mother's maiden name?</option>
             <option value="What city were you born in?">What city were you born in?</option>
         </select>
+        
     </div>
 
     <!-- Security Answer Input -->
