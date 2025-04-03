@@ -9,9 +9,11 @@ use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use DB;
 use Artisan;
+use Illuminate\Support\Facades\Hash;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\CreditTransaction;
 
 class UsersController extends Controller {
 
@@ -31,27 +33,52 @@ class UsersController extends Controller {
     }
 
     public function doRegister(Request $request) {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
 
-    	try {
-    		$this->validate($request, [
-	        'name' => ['required', 'string', 'min:5'],
-	        'email' => ['required', 'email', 'unique:users'],
-	        'password' => ['required', 'confirmed', Password::min(8)->numbers()->letters()->mixedCase()->symbols()],
-	    	]);
-    	}
-    	catch(\Exception $e) {
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+        ]);
 
-    		return redirect()->back()->withInput($request->input())->withErrors('Invalid registration information.');
-    	}
+        $user->assignRole('Customer');
 
-    	
-    	$user =  new User();
-	    $user->name = $request->name;
-	    $user->email = $request->email;
-	    $user->password = bcrypt($request->password); //Secure
-	    $user->save();
+        return redirect()->route('login')->with('success', 'Registration successful. Please login.');
+    }
 
-        return redirect('/');
+    public function registerEmployee()
+    {
+        if (!auth()->user()->hasPermissionTo('admin_users')) {
+            abort(403, 'Unauthorized action.');
+        }
+        return view('users.register-employee');
+    }
+
+    public function doRegisterEmployee(Request $request)
+    {
+        if (!auth()->user()->hasPermissionTo('admin_users')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+        ]);
+
+        $user->assignRole('Employee');
+
+        return redirect()->route('users')->with('success', 'Employee registered successfully.');
     }
 
     public function login(Request $request) {
@@ -184,5 +211,113 @@ class UsersController extends Controller {
         $user->save();
 
         return redirect(route('profile', ['user'=>$user->id]));
+    }
+
+    public function listCustomers()
+    {
+        if (!auth()->user()->hasPermissionTo('view_customers')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $customers = User::role('Customer')->get();
+        return view('users.customers', compact('customers'));
+    }
+
+    public function addCreditForm(User $customer)
+    {
+        if(!auth()->user()->hasPermissionTo('manage_credit')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        if(!$customer->hasRole('Customer')) {
+            abort(403, 'Only customer accounts can have credit added.');
+        }
+
+        return view('users.add-credit', compact('customer'));
+    }
+
+    public function addCredit(Request $request, User $customer)
+    {
+        if(!auth()->user()->hasPermissionTo('manage_credit')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        if(!$customer->hasRole('Customer')) {
+            abort(403, 'Only customer accounts can have credit added.');
+        }
+
+        $request->validate([
+            'amount' => [
+                'required',
+                'numeric',
+                'min:0.01',
+                'max:10000',
+                function ($attribute, $value, $fail) {
+                    if (!is_numeric($value) || floor($value * 100) != $value * 100) {
+                        $fail('The amount cannot have more than 2 decimal places.');
+                    }
+                },
+            ],
+            'reason' => 'required|string|max:255|not_regex:/[<>]/'
+        ], [
+            'amount.min' => 'The minimum credit amount is $0.01.',
+            'amount.max' => 'The maximum credit amount is $10,000.',
+            'reason.not_regex' => 'The reason field cannot contain HTML tags.'
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // Log the old balance
+            $oldBalance = $customer->credit;
+            
+            $customer->credit += $request->amount;
+            
+            // Check for overflow
+            if ($customer->credit < $oldBalance) {
+                throw new \Exception('Credit amount would cause overflow.');
+            }
+            
+            $customer->save();
+
+            CreditTransaction::create([
+                'user_id' => $customer->id,
+                'amount' => $request->amount,
+                'type' => 'credit',
+                'reason' => strip_tags($request->reason),
+                'admin_id' => auth()->id()
+            ]);
+
+            DB::commit();
+
+            return redirect()
+                ->route('users.credit-transactions', $customer)
+                ->with('success', 'Credit added successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Credit addition failed: ' . $e->getMessage());
+            return redirect()
+                ->back()
+                ->with('error', 'Failed to add credit. Please try again.')
+                ->withInput();
+        }
+    }
+
+    public function creditTransactions(User $customer)
+    {
+        if(!auth()->user()->hasPermissionTo('manage_credit')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        if(!$customer->hasRole('Customer')) {
+            abort(403, 'Only customer accounts can have credit transactions.');
+        }
+
+        $transactions = $customer->creditTransactions()
+            ->with('admin')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('users.credit-transactions', compact('customer', 'transactions'));
     }
 } 

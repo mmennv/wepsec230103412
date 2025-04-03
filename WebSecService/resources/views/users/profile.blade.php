@@ -11,6 +11,10 @@
                 <th>Email</th><td>{{$user->email}}</td>
             </tr>
             <tr>
+                <th>Credit Balance</th>
+                <td>${{number_format($user->credit, 2)}}</td>
+            </tr>
+            <tr>
                 <th>Roles</th>
                 <td>
                     @foreach($user->roles as $role)
@@ -27,6 +31,28 @@
                 </td>
             </tr>
         </table>
+
+        @if($user->purchasedProducts->count() > 0)
+        <h4>Purchased Products</h4>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Price</th>
+                    <th>Purchase Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($user->purchasedProducts as $product)
+                <tr>
+                    <td>{{$product->name}}</td>
+                    <td>${{number_format($product->price, 2)}}</td>
+                    <td>{{$product->pivot->purchase_date->format('Y-m-d H:i:s')}}</td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+        @endif
 
         <div class="row">
             <div class="col col-6">
