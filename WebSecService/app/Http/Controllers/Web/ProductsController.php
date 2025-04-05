@@ -53,6 +53,7 @@ class ProductsController extends Controller {
 	        'code' => ['required', 'string', 'max:32'],
 	        'name' => ['required', 'string', 'max:128'],
 	        'model' => ['required', 'string', 'max:256'],
+			'stock' => ['required', 'integer', 'min:0'],
 	        'description' => ['required', 'string', 'max:1024'],
 	        'price' => ['required', 'numeric'],
 	    ]);
@@ -72,4 +73,36 @@ class ProductsController extends Controller {
 
 		return redirect()->route('products_list');
 	}
+
+	public function buy(Request $request, Product $product) {
+		$user = auth()->user();
+	
+		// Check if the stock is available
+		if ($product->stock == 0) {
+			return redirect()->route('products_list')->with('error', 'This product is not available right now.');
+		}
+	
+		// Check if the user has enough credit
+		if ($user->credit < $product->price) {
+			return view('products.insufficient_credit', [
+				'product' => $product,
+				'user' => $user,
+			]);
+		}
+	
+		// Decrease the user's credit
+		$user->credit -= $product->price;
+		$user->save();
+	
+		// Decrease the product stock
+		$product->stock -= 1;
+		$product->save();
+	
+		// Attach the product to the user's bought products
+		$user->boughtProducts()->attach($product->id);
+	
+		return redirect()->route('products_list')->with('success', 'Product bought successfully!');
+	}
+	
+	
 } 

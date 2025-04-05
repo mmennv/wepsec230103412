@@ -11,8 +11,7 @@
                 <th>Email</th><td>{{$user->email}}</td>
             </tr>
             <tr>
-                <th>Credit Balance</th>
-                <td>${{number_format($user->credit, 2)}}</td>
+                <th>credit</th><td>{{$user->credit}}</td>
             </tr>
             <tr>
                 <th>Roles</th>
@@ -31,28 +30,6 @@
                 </td>
             </tr>
         </table>
-
-        @if($user->purchasedProducts->count() > 0)
-        <h4>Purchased Products</h4>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Product</th>
-                    <th>Price</th>
-                    <th>Purchase Date</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($user->purchasedProducts as $product)
-                <tr>
-                    <td>{{$product->name}}</td>
-                    <td>${{number_format($product->price, 2)}}</td>
-                    <td>{{$product->pivot->purchase_date->format('Y-m-d H:i:s')}}</td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
-        @endif
 
         <div class="row">
             <div class="col col-6">
@@ -73,4 +50,37 @@
         </div>
     </div>
 </div>
+
+<h2 class="mt-4 mb-3">Bought Products</h2>
+
+@if($user->boughtProducts && $user->boughtProducts->count() > 0)
+    <div class="table-responsive">
+        <table class="table table-striped table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Quantity</th>
+                    <th scope="col">Total Price</th>
+                    <th scope="col">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($user->boughtProducts as $product)
+                    <tr>
+                        <td>{{ $product->name }}</td>
+                        <td>{{ $product->pivot->quantity ?? 1 }}</td>
+                        <td>${{ number_format($product->pivot->total_price ?? ($product->price), 2) }}</td>
+                        <td>{{ ucfirst($product->pivot->status ?? 'pending') }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+@else
+    <div class="alert alert-info">
+        You have not bought any products yet.
+    </div>
+@endif
+
+
 @endsection

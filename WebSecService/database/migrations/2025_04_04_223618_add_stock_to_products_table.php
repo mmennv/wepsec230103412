@@ -9,12 +9,13 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
-    {
-        Schema::table('products', function (Blueprint $table) {
-            $table->integer('stock')->default(0);
-        });
-    }
+    public function up()
+{
+    Schema::table('products', function (Blueprint $table) {
+        $table->integer('stock')->default(0);
+    });
+}
+
 
     /**
      * Reverse the migrations.
@@ -22,7 +23,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            $table->dropColumn('stock');
+            //
         });
     }
 };

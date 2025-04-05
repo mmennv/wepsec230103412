@@ -1,116 +1,51 @@
 @extends('layouts.master')
-@section('title', 'Edit Product')
+@section('title', 'Prime Numbers')
 @section('content')
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">Edit Product</div>
 
-                <div class="card-body">
-                    <form method="POST" action="{{ route('products.update', $product) }}" enctype="multipart/form-data">
-                        @csrf
-                        @method('PUT')
-
-                        <div class="row mb-3">
-                            <label for="name" class="col-md-4 col-form-label text-md-end">Product Name</label>
-
-                            <div class="col-md-6">
-                                <input id="name" type="text" class="form-control @error('name') is-invalid @enderror" name="name" value="{{ old('name', $product->name) }}" required autofocus>
-
-                                @error('name')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <label for="model" class="col-md-4 col-form-label text-md-end">Model</label>
-
-                            <div class="col-md-6">
-                                <input id="model" type="text" class="form-control @error('model') is-invalid @enderror" name="model" value="{{ old('model', $product->model) }}" required>
-
-                                @error('model')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <label for="price" class="col-md-4 col-form-label text-md-end">Price</label>
-
-                            <div class="col-md-6">
-                                <input id="price" type="number" step="0.01" class="form-control @error('price') is-invalid @enderror" name="price" value="{{ old('price', $product->price) }}" required>
-
-                                @error('price')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <label for="stock" class="col-md-4 col-form-label text-md-end">Stock Quantity</label>
-
-                            <div class="col-md-6">
-                                <input id="stock" type="number" class="form-control @error('stock') is-invalid @enderror" name="stock" value="{{ old('stock', $product->stock) }}" required>
-
-                                @error('stock')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <label for="description" class="col-md-4 col-form-label text-md-end">Description</label>
-
-                            <div class="col-md-6">
-                                <textarea id="description" class="form-control @error('description') is-invalid @enderror" name="description">{{ old('description', $product->description) }}</textarea>
-
-                                @error('description')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <label for="photo" class="col-md-4 col-form-label text-md-end">Product Photo</label>
-
-                            <div class="col-md-6">
-                                @if($product->photo)
-                                    <img src="{{ asset('storage/' . $product->photo) }}" alt="{{ $product->name }}" style="max-width: 100px; margin-bottom: 10px;">
-                                @endif
-                                <input id="photo" type="file" class="form-control @error('photo') is-invalid @enderror" name="photo">
-
-                                @error('photo')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="row mb-0">
-                            <div class="col-md-6 offset-md-4">
-                                <button type="submit" class="btn btn-primary">
-                                    Update Product
-                                </button>
-                                <a href="{{ route('products.manage') }}" class="btn btn-secondary">Cancel</a>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
+<form action="{{route('products_save', $product->id)}}" method="post">
+    {{ csrf_field() }}
+    {{ csrf_field() }}
+    @foreach($errors->all() as $error)
+    <div class="alert alert-danger">
+    <strong>Error!</strong> {{$error}}
+    </div>
+    @endforeach
+    <div class="row mb-2">
+        <div class="col-6">
+            <label for="code" class="form-label">Code:</label>
+            <input type="text" class="form-control" placeholder="Code" name="code" required value="{{$product->code}}">
+        </div>
+        <div class="col-6">
+            <label for="model" class="form-label">Model:</label>
+            <input type="text" class="form-control" placeholder="Model" name="model" required value="{{$product->model}}">
         </div>
     </div>
-</div>
+    <div class="row mb-2">
+        <div class="col">
+            <label for="name" class="form-label">Name:</label>
+            <input type="text" class="form-control" placeholder="Name" name="name" required value="{{$product->name}}">
+        </div>
+    </div>
+    <div class="row mb-2">
+        <div class="col-6">
+            <label for="model" class="form-label">Price:</label>
+            <input type="numeric" class="form-control" placeholder="Price" name="price" required value="{{$product->price}}">
+        </div>
+        <div class="col-6">
+            <label for="model" class="form-label">Photo:</label>
+            <input type="text" class="form-control" placeholder="Photo" name="photo" required value="{{$product->photo}}">
+        </div>
+    </div>
+    <div class="mb-3">
+        <label for="stock" class="form-label">Stock</label>
+        <input type="number" class="form-control" id="stock" name="stock" value="{{ old('stock', $product->stock ?? 0) }}">
+    </div>
+    <div class="row mb-2">
+        <div class="col">
+            <label for="name" class="form-label">Description:</label>
+            <textarea type="text" class="form-control" placeholder="Description" name="description" required>{{$product->description}}</textarea>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary">Submit</button>
+</form>
 @endsection

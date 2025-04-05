@@ -1,13 +1,25 @@
 @extends('layouts.master')
 @section('title', 'Test Page')
 @section('content')
+
+@if(session('success'))
+    <div class="alert alert-success">
+        {{ session('success') }}
+    </div>
+@endif
+@if(session('error'))
+    <div class="alert alert-danger">
+        {{ session('error') }}
+    </div>
+@endif
+
 <div class="row mt-2">
     <div class="col col-10">
         <h1>Products</h1>
     </div>
     <div class="col col-2">
-        @can('manage_products')
-        <a href="{{route('products.create')}}" class="btn btn-success form-control">Add Product</a>
+        @can('add_products')
+        <a href="{{route('products_edit')}}" class="btn btn-success form-control">Add Product</a>
         @endcan
     </div>
 </div>
@@ -51,9 +63,7 @@
         <div class="card-body">
             <div class="row">
                 <div class="col col-sm-12 col-lg-4">
-                    @if($product->photo)
-                        <img src="{{ asset('storage/' . $product->photo) }}" class="img-thumbnail" alt="{{$product->name}}" width="100%">
-                    @endif
+                    <img src="{{asset("images/$product->photo")}}" class="img-thumbnail" alt="{{$product->name}}" width="100%">
                 </div>
                 <div class="col col-sm-12 col-lg-8 mt-3">
                     <div class="row mb-2">
@@ -61,28 +71,34 @@
 					        <h3>{{$product->name}}</h3>
 					    </div>
 					    <div class="col col-2">
-                            @can('manage_products')
-					        <a href="{{route('products.edit', $product)}}" class="btn btn-success form-control">Edit</a>
+                            @can('edit_products')
+					        <a href="{{route('products_edit', $product->id)}}" class="btn btn-success form-control">Edit</a>
                             @endcan
 					    </div>
 					    <div class="col col-2">
-                            @can('manage_products')
-                            <form action="{{route('products.destroy', $product)}}" method="POST" class="d-inline">
-                                @csrf
-                                @method('DELETE')
-					            <button type="submit" class="btn btn-danger form-control">Delete</button>
-                            </form>
+                            @can('delete_products')
+					        <a href="{{route('products_delete', $product->id)}}" class="btn btn-danger form-control">Delete</a>
                             @endcan
 					    </div>
+                        <div class="col col-2">
+                            @auth
+                                @if(auth()->user()->hasRole('Customer'))
+                                    <form action="{{ route('buy_product', $product->id) }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="btn btn-primary">Buy</button>
+                                    </form>
+                                @endif
+                            @endauth
+                        </div>
 					</div>
 
                     <table class="table table-striped">
                         <tr><th width="20%">Name</th><td>{{$product->name}}</td></tr>
                         <tr><th>Model</th><td>{{$product->model}}</td></tr>
                         <tr><th>Code</th><td>{{$product->code}}</td></tr>
-                        <tr><th>Price</th><td>${{number_format($product->price, 2)}}</td></tr>
+                        <tr><th>Price</th><td>{{$product->price}}</td>
+                        <tr><th>Available Stock</th><td>{{ $product->stock }}</td></tr>
                         <tr><th>Description</th><td>{{$product->description}}</td></tr>
-                        <tr><th>Stock</th><td>{{$product->stock}}</td></tr>
                     </table>
                 </div>
             </div>

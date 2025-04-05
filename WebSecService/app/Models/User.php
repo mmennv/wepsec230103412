@@ -7,12 +7,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
-use Laravel\Sanctum\HasApiTokens;
 
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRoles;
+    use HasRoles;
 
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
@@ -26,7 +25,6 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'credit',
     ];
 
     /**
@@ -49,22 +47,11 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'credit' => 'decimal:2'
         ];
     }
 
-    /**
-     * Get the products purchased by the user.
-     */
-    public function purchasedProducts()
-    {
-        return $this->belongsToMany(Product::class, 'user_products')
-            ->withPivot('purchase_date')
-            ->withTimestamps();
+    public function boughtProducts() {
+        return $this->belongsToMany(Product::class, 'bought_products')->withTimestamps();
     }
-
-    public function creditTransactions()
-    {
-        return $this->hasMany(CreditTransaction::class);
-    }
+    
 }
