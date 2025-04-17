@@ -14,7 +14,7 @@
         <div class="col col-sm-1">
             <button type="submit" class="btn btn-primary">Submit</button>
         </div>
-        <div class="col col-sm-5">
+        <div class="col col-sm-1">
             <button type="reset" class="btn btn-danger">Reset</button>
         </div>
         <div class="col col-3">
@@ -34,9 +34,6 @@
           <th scope="col">Name</th>
           <th scope="col">Email</th>
           <th scope="col">Roles</th>
-          @can('users_credit')
-          <th scope="col">credit</th>
-          @endcan
           <th scope="col"></th>
         </tr>
       </thead>
@@ -50,9 +47,6 @@
             <span class="badge bg-primary">{{$role->name}}</span>
           @endforeach
         </td>
-        @can('users_credit')
-        <th scope="col">{{$user->credit}}</td>
-        @endcan
         <td scope="col">
           @can('edit_users')
           <a class="btn btn-primary" href='{{route('users_edit', [$user->id])}}'>Edit</a>
@@ -64,18 +58,15 @@
           <a class="btn btn-danger" href='{{route('users_delete', [$user->id])}}'>Delete</a>
           @endcan
           @can('charge_credit')
-              @if(auth()->user()->hasRole('Employee') && $user->hasRole('Customer'))
-                  <a href="{{ route('charge_credit_form', $user->id) }}" class="btn btn-info btn-sm">Charge Credit</a>
-              @endif
+            @if(auth()->user()->hasRole('Employee') && $user->hasRole('Customer'))
+              <a href="{{ route('charge_credit_form', $user->id) }}" class="btn btn-info btn-sm">Charge Credit</a>
+            @endif
           @endcan
-
-
         </td>
       </tr>
       @endforeach
     </table>
   </div>
 </div>
-
 
 @endsection

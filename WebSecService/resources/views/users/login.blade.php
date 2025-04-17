@@ -24,6 +24,9 @@
       <div class="form-group mb-2">
         <button type="submit" class="btn btn-primary">Login</button>
       </div>
+      <div class="form-group mb-2">
+      <a href="{{route('login_with_google')}}" class="btn btn-success">Login with Google</a>
+      </div>
     </form>
     </div>
   </div>

@@ -7,8 +7,17 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\VerificationEmail;
+use Carbon\Carbon;
+use Laravel\Socialite\Facades\Socialite;
+
+
+
 use DB;
 use Artisan;
+
 use App\Http\Controllers\Controller;
 use App\Models\User;
 
@@ -19,16 +28,15 @@ class UsersController extends Controller {
     public function list(Request $request)
     {
         $query = User::query();
-
+    
         if (auth()->user()->hasRole('Employee')) {
             $query->role('Customer'); // Only users with 'Customer' role
         }
-
+    
         $users = $query->get();
-
+    
         return view('users.list', compact('users'));
     }
-
 
 	public function register(Request $request) {
         return view('users.register');
@@ -36,29 +44,35 @@ class UsersController extends Controller {
 
     public function doRegister(Request $request) {
 
-    	try {
-    		$this->validate($request, [
+        try {
+            $this->validate($request, [
             'name' => ['required', 'string', 'min:5'],
             'email' => ['required', 'email', 'unique:users'],
             'password' => ['required', 'confirmed', Password::min(8)],
-        	]);
-    	}
-    	catch(\Exception $e) {
-    		return redirect()->back()->withInput($request->input())->withErrors('Invalid registration information.');
-    	}
+            ]);
+        }
+        catch(\Exception $e) {
+            return redirect()->back()->withInput($request->input())->withErrors('Invalid registration information.');
+        }
 
-    	$user = new User();
-	    $user->name = $request->name;
-	    $user->email = $request->email;
-	    $user->password = bcrypt($request->password);
-	    $user->save();
+        $user = new User();
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->password = bcrypt($request->password);
+        $user->save();
 
         // Assign default role "Customer"
         $customerRole = Role::firstOrCreate(['name' => 'Customer']);
         $user->assignRole($customerRole);
 
+        $title = "Verification Link";
+        $token = Crypt::encryptString(json_encode(['id' => $user->id, 'email' => $user->email]));
+        $link = route("verify", ['token' => $token]);
+        Mail::to($user->email)->send(new VerificationEmail($link, $user->name));
+
         return redirect('/');
     }
+
 
     public function login(Request $request) {
         return view('users.login');
@@ -71,6 +85,8 @@ class UsersController extends Controller {
 
         $user = User::where('email', $request->email)->first();
         Auth::setUser($user);
+        if(!$user->email_verified_at)
+        return redirect()->back()->withInput($request->input())->withErrors('Your email is not verified.');
 
         return redirect('/');
     }
@@ -142,15 +158,15 @@ class UsersController extends Controller {
             Artisan::call('cache:clear');
         }
 
-        //$user->syncRoles([1]);
-        //Artisan::call('cache:clear');
-
         return redirect(route('profile', ['user'=>$user->id]));
     }
 
     public function delete(Request $request, User $user) {
+
         if(!auth()->user()->hasPermissionTo('delete_users')) abort(401);
-        $user->delete();
+
+        //$user->delete();
+
         return redirect()->route('users');
     }
 
@@ -222,4 +238,39 @@ class UsersController extends Controller {
         return redirect()->route('charge_credit_form', $user->id)
                          ->with('success', 'Credit charged successfully!');
     }
+
+    public function verify(Request $request) {
+
+        $decryptedData = json_decode(Crypt::decryptString($request->token), true);
+        $user = User::find($decryptedData['id']);
+        if(!$user) abort(401);
+        $user->email_verified_at = Carbon::now();
+        $user->save();
+        return view('users.verified', compact('user'));
+       }
+       
+    public function redirectToGoogle()
+
+    {
+        return Socialite::driver('google')->redirect();
+    }
+
+    public function handleGoogleCallback() {
+        try {
+        $googleUser = Socialite::driver('google')->user();
+        $user = User::updateOrCreate([
+        'google_id' => $googleUser->id,
+        ], [
+        'name' => $googleUser->name,
+        'email' => $googleUser->email,
+        'google_token' => $googleUser->token,
+        'google_refresh_token' => $googleUser->refreshToken,
+        ]);
+        Auth::login($user);
+        return redirect('/');
+        } catch (\Exception $e) {
+        return redirect('/login')->with('error', 'Google login failed.'); // Handle errors
+        }
+       }
+
 } 

@@ -11,9 +11,6 @@
                 <th>Email</th><td>{{$user->email}}</td>
             </tr>
             <tr>
-                <th>credit</th><td>{{$user->credit}}</td>
-            </tr>
-            <tr>
                 <th>Roles</th>
                 <td>
                     @foreach($user->roles as $role)
@@ -50,7 +47,6 @@
         </div>
     </div>
 </div>
-
 <h2 class="mt-4 mb-3">Bought Products</h2>
 
 @if($user->boughtProducts && $user->boughtProducts->count() > 0)
@@ -81,6 +77,6 @@
         You have not bought any products yet.
     </div>
 @endif
-
-
 @endsection
+
+

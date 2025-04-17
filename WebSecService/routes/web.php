@@ -20,6 +20,11 @@ Route::post('users/save_password/{user}', [UsersController::class, 'savePassword
 Route::get('users/charge_credit/{user}', [UsersController::class, 'chargeCreditForm'])->name('charge_credit_form')->middleware('auth');
 Route::post('users/charge_credit/{user}', [UsersController::class, 'chargeCredit'])->name('charge_credit')->middleware('auth');
 
+Route::get('verify', [UsersController::class, 'verify'])->name('verify');
+Route::get('/auth/google',[UsersController::class, 'redirectToGoogle'])->name('login_with_google');
+Route::get('/auth/google/callback',[UsersController::class, 'handleGoogleCallback']);
+
+
 
 
 

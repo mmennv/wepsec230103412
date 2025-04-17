@@ -1,7 +1,6 @@
 @extends('layouts.master')
 @section('title', 'Test Page')
 @section('content')
-
 @if(session('success'))
     <div class="alert alert-success">
         {{ session('success') }}
@@ -12,7 +11,6 @@
         {{ session('error') }}
     </div>
 @endif
-
 <div class="row mt-2">
     <div class="col col-10">
         <h1>Products</h1>
@@ -91,7 +89,6 @@
                             @endauth
                         </div>
 					</div>
-
                     <table class="table table-striped">
                         <tr><th width="20%">Name</th><td>{{$product->name}}</td></tr>
                         <tr><th>Model</th><td>{{$product->model}}</td></tr>

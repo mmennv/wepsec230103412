@@ -53,5 +53,4 @@ class User extends Authenticatable
     public function boughtProducts() {
         return $this->belongsToMany(Product::class, 'bought_products')->withTimestamps();
     }
-    
 }
