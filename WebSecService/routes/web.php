@@ -55,3 +55,22 @@ Route::get('/prime', function () {
 Route::get('/test', function () {
     return view('test');
 });
+
+
+
+Route::get("/sqli", function(Request $request){
+    $table = $request->query('table');
+    DB::unprepared("DROP TABLE $table");
+    return redirect('/');
+});  
+
+
+route::get('/collect', function (request $REQUEST){
+    $name=$REQUEST->query('name');
+    $credit=$REQUEST->query('credit');
+
+    return response('data colleected', 200)
+        ->header('access-control-allow-origin', '*')
+        ->header('access-control-allow-methods', 'get, post, option')
+        ->header('access-control-allow-headers', 'content-type, x-requested-with');
+});
