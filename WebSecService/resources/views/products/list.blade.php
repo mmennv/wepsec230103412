@@ -53,14 +53,16 @@
             <button type="reset" class="btn btn-danger">Reset</button>
         </div>
     </div>
-    @if(!empty(request()->keywords))
-        <div class="card mt-2">
-        <div class="card-body">
-            View search result of keywords: <span>{!!request()->keywords!!}</span>
+</form>
+
+
+@if(!empty(request()->keywords))
+<div class="card mt-2">
+<div class="card-body">
+    View search result of keywords: <span>{!!request()->keywords!!}</span>
 </div>
 </div>
 @endif
-</form>
 
 
 @foreach($products as $product)
