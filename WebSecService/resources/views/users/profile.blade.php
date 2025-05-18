@@ -9,8 +9,19 @@
             </tr>
             <tr>
                 <th>Email</th><td>{{$user->email}}</td>
-            </tr>
-            <tr>
+                <tr>
+                    <th>Phone</th><td>{{ $user->phone }}</td>
+                </tr>
+                </tr>
+                    @auth
+                        @if(auth()->user()->hasRole(['Customer', 'Super_user']))
+                            <tr>
+                                <th>credit</th><td>{{$user->credit}}</td>
+                            </tr>
+                        @endif
+                    @endauth
+                <tr>
+
                 <th>Roles</th>
                 <td>
                     @foreach($user->roles as $role)
@@ -19,12 +30,16 @@
                 </td>
             </tr>
             <tr>
+            @auth
+            @if(!auth()->user()->hasRole(['Customer', 'Super_user']))
                 <th>Permissions</th>
                 <td>
                     @foreach($permissions as $permission)
                         <span class="badge bg-success">{{$permission->display_name}}</span>
                     @endforeach
                 </td>
+            @endif
+            @endauth
             </tr>
         </table>
 
@@ -47,36 +62,40 @@
         </div>
     </div>
 </div>
-<h2 class="mt-4 mb-3">Bought Products</h2>
 
-@if($user->boughtProducts && $user->boughtProducts->count() > 0)
-    <div class="table-responsive">
-        <table class="table table-striped table-bordered">
-            <thead class="table-dark">
-                <tr>
-                    <th scope="col">Name</th>
-                    <th scope="col">Quantity</th>
-                    <th scope="col">Total Price</th>
-                    <th scope="col">Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($user->boughtProducts as $product)
+@auth
+@if(auth()->user()->hasRole(['Customer', 'Super_user']))
+    <h2 class="mt-4 mb-3">Bought Products</h2>
+
+    @if($user->boughtProducts && $user->boughtProducts->count() > 0)
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered">
+                <thead class="table-dark">
                     <tr>
-                        <td>{{ $product->name }}</td>
-                        <td>{{ $product->pivot->quantity ?? 1 }}</td>
-                        <td>${{ number_format($product->pivot->total_price ?? ($product->price), 2) }}</td>
-                        <td>{{ ucfirst($product->pivot->status ?? 'pending') }}</td>
+                        <th scope="col">Name</th>
+                        <th scope="col">Quantity</th>
+                        <th scope="col">Total Price</th>
+                        <th scope="col">Status</th>
                     </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </div>
-@else
-    <div class="alert alert-info">
-        You have not bought any products yet.
-    </div>
+                </thead>
+                <tbody>
+                    @foreach($user->boughtProducts as $product)
+                        <tr>
+                            <td>{{ $product->name }}</td>
+                            <td>{{ $product->pivot->quantity ?? 1 }}</td>
+                            <td>${{ number_format($product->pivot->total_price ?? ($product->price), 2) }}</td>
+                            <td>{{ $product->pivot->status_message ?? 'No status message' }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @else
+        <div class="alert alert-info">
+            You have not bought any products yet.
+        </div>
+    @endif
 @endif
+@endauth
+
 @endsection
-
-

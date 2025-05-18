@@ -35,10 +35,10 @@
             <label for="model" class="form-label">Photo:</label>
             <input type="text" class="form-control" placeholder="Photo" name="photo" required value="{{$product->photo}}">
         </div>
-        <div class="mb-3">
-            <label for="stock" class="form-label">Stock</label>
-            <input type="number" class="form-control" id="stock" name="stock" value="{{ old('stock', $product->stock ?? 0) }}">
-        </div>
+    </div>
+    <div class="mb-3">
+        <label for="stock" class="form-label">Stock</label>
+        <input type="number" class="form-control" id="stock" name="stock" value="{{ old('stock', $product->stock ?? 0) }}">
     </div>
     <div class="row mb-2">
         <div class="col">

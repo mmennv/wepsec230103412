@@ -1,6 +1,7 @@
 @extends('layouts.master')
 @section('title', 'Test Page')
 @section('content')
+
 @if(session('success'))
     <div class="alert alert-success">
         {{ session('success') }}
@@ -11,6 +12,7 @@
         {{ session('error') }}
     </div>
 @endif
+
 <div class="row mt-2">
     <div class="col col-10">
         <h1>Products</h1>
@@ -56,13 +58,24 @@
 </form>
 
 
+
+
+// £££££
 @if(!empty(request()->keywords))
-<div class="card mt-2">
-<div class="card-body">
-    View search result of keywords: <span>{!!request()->keywords!!}</span>
-</div>
-</div>
+
+    <div class='card mt-2'>
+
+        <div class='card-body'>
+
+            view search results: <span>{{!! request()->keywords !!}}</span>
+
+        </div>
+
+    </div>
+
 @endif
+        
+
 
 
 @foreach($products as $product)
@@ -89,7 +102,7 @@
 					    </div>
                         <div class="col col-2">
                             @auth
-                                @if(auth()->user()->hasRole('Customer'))
+                                @if(auth()->user()->hasRole(['Customer', 'Super_user']))
                                     <form action="{{ route('buy_product', $product->id) }}" method="POST">
                                         @csrf
                                         <button type="submit" class="btn btn-primary">Buy</button>
@@ -97,7 +110,19 @@
                                 @endif
                             @endauth
                         </div>
+
+                        @can('select_favourite')
+                            <form action="{{ route('products.toggle_favourite', $product->id) }}" method="POST" class="d-inline">
+                                @csrf
+                                <button type="submit" class="btn btn-warning">
+                                    {{ $product->favourite ? 'Unfavourite' : 'Favourite' }}
+                                </button>
+                            </form>
+                        @endcan
+
+
 					</div>
+
                     <table class="table table-striped">
                         <tr><th width="20%">Name</th><td>{{$product->name}}</td></tr>
                         <tr><th>Model</th><td>{{$product->model}}</td></tr>
@@ -112,5 +137,3 @@
     </div>
 @endforeach
 @endsection
-
-
